@@ -11,24 +11,38 @@ use RecursiveIteratorIterator;
 class DonkiController extends Controller
 {
     const DONKI_API_LIST = [
-        'cme' => 'https://api.nasa.gov/DONKI/CME?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY',
-        'cme_analysis' => 'https://api.nasa.gov/DONKI/CMEAnalysis?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&mostAccurateOnly=true&speed=500&halfAngle=30&catalog=ALL&api_key=DEMO_KEY',
-        'gst' => 'https://api.nasa.gov/DONKI/GST?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY',
-        'ips' => 'https://api.nasa.gov/DONKI/IPS?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&location=LOCATION&catalog=CATALOG&api_key=DEMO_KEY',
-        'flr' => 'https://api.nasa.gov/DONKI/FLR?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY',
-        'sep' => 'https://api.nasa.gov/DONKI/SEP?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY',
-        'mpc' => 'https://api.nasa.gov/DONKI/MPC?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY',
-        'rbe' => 'https://api.nasa.gov/DONKI/RBE?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY',
-        'hss' => 'https://api.nasa.gov/DONKI/HSS?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY',
-        'wsa_enlil_simulations' => 'https://api.nasa.gov/DONKI/WSAEnlilSimulations?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY',
-        'notifications' => 'https://api.nasa.gov/DONKI/notifications?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&type=all&api_key=DEMO_KEY',
+        'cme' => 'https://api.nasa.gov/DONKI/CME?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=',
+        'cme_analysis' => 'https://api.nasa.gov/DONKI/CMEAnalysis?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&mostAccurateOnly=true&speed=500&halfAngle=30&catalog=ALL&api_key=',
+        'gst' => 'https://api.nasa.gov/DONKI/GST?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=',
+        'ips' => 'https://api.nasa.gov/DONKI/IPS?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&location=LOCATION&catalog=CATALOG&api_key=',
+        'flr' => 'https://api.nasa.gov/DONKI/FLR?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=',
+        'sep' => 'https://api.nasa.gov/DONKI/SEP?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=',
+        'mpc' => 'https://api.nasa.gov/DONKI/MPC?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=',
+        'rbe' => 'https://api.nasa.gov/DONKI/RBE?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=',
+        'hss' => 'https://api.nasa.gov/DONKI/HSS?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=',
+        'wsa_enlil_simulations' => 'https://api.nasa.gov/DONKI/WSAEnlilSimulations?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=',
+        'notifications' => 'https://api.nasa.gov/DONKI/notifications?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&type=all&api_key=',
     ];
 
     private $client;
 
+    /**
+     * @return void
+     */
     public function __construct()
     {
         $this->client = new Client();
+    }
+
+    /**
+     * @return array
+     */
+    public function getApiUrls()
+    {
+        $apiKey = env('NASA_API_KEY');
+        return array_map(function ($url) use ($apiKey) {
+            return $url . $apiKey;
+        }, self::DONKI_API_LIST);
     }
 
     /**
@@ -46,10 +60,9 @@ class DonkiController extends Controller
         }
 
         $apisConFechas = [];
-        foreach (self::DONKI_API_LIST as $key => $url) {
+        foreach ($this->getApiUrls() as $key => $url) {
             $urlConFechas = str_replace('yyyy-MM-dd', $fechaInicio->format('Y-m-d'), $url);
             $urlConFechas = str_replace('yyyy-MM-dd', $fechaTermino->format('Y-m-d'), $urlConFechas);
-            $urlConFechas = str_replace('DEMO_KEY', env('NASA_API_KEY'), $urlConFechas);
             $apisConFechas[$key] = $urlConFechas;
         }
         return $apisConFechas;
@@ -85,11 +98,44 @@ class DonkiController extends Controller
 
             $instruments = $this->extractInstruments($data);
             $resultados = array_merge($resultados, $instruments);
+            $usagePercentages = $this->getUsagePercentages($instruments);
+            $resultados['usagePercentages'] = $usagePercentages;
         }
 
         return $resultados;
     }
 
+    /**
+     * @param array $instruments
+     * @return array
+     */
+    private function getUsagePercentages($instruments)
+    {
+        $instrumentCount = [];
+        
+        foreach ($instruments as $instrument) {
+            if (!empty($instrument)) {
+                if (!isset($instrumentCount[$instrument])) {
+                    $instrumentCount[$instrument] = 0;
+                }
+                $instrumentCount[$instrument]++;
+            }
+        }
+
+        $totalInstruments = array_sum($instrumentCount);
+        
+        $usagePercentages = [];
+        foreach ($instrumentCount as $name => $count) {
+            $usagePercentages[$name] = $count / $totalInstruments;
+        }
+
+        return $usagePercentages;
+    }
+
+    /**
+     * @param array $data
+     * @return array
+     */
     private function extractInstruments($data)
     {
         $instruments = [];
@@ -167,4 +213,22 @@ class DonkiController extends Controller
         return $activityIds;
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getInstrumentsUsage(Request $request)
+    {
+        $fechaInicio = $request->input('startDate');
+        $fechaTermino = $request->input('endDate');
+
+        $apisConFechas = $this->getApisConFechas($fechaInicio, $fechaTermino);
+        $instruments = $this->getInstruments($apisConFechas);
+
+        $usagePercentages = $this->getUsagePercentages($instruments);
+
+        return response()->json([
+            'instruments_use' => $usagePercentages,
+        ]);
+    }
 }

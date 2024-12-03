@@ -10,6 +10,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/instruments', [DonkiController::class, 'instruments']);
 Route::get('/activity-ids', [DonkiController::class, 'activityIds']);
-
-Route::get('/instrument-usage-percentage', [DonkiController::class, 'instrumentUsagePercentage']);
-Route::post('/instrument-usage', [DonkiController::class, 'instrumentUsage']);
+Route::get('/instrument-usage', [DonkiController::class, 'getInstrumentsUsage']);
