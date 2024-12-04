@@ -7,59 +7,97 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+## Descripción del Repositorio
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Este repositorio implementa una API REST que consume la API abierta de la NASA, específicamente el proyecto DONKI (Data on National Key Indicators). El objetivo principal es extraer y procesar información sobre los instrumentos utilizados en las mediciones realizadas por DONKI, así como las actividades asociadas a esos instrumentos.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Cambios Realizados
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. **Configuración de la API de NASA**:
+   - Se creó una API Key para autenticar las solicitudes a la API de NASA, permitiendo el acceso a los datos necesarios.
 
-## Learning Laravel
+2. **Consumo de la API DONKI**:
+   - Se identificaron y documentaron todas las rutas de la API de DONKI que devuelven información sobre los instrumentos utilizados en las mediciones y los identificadores de cada actividad.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+3. **Implementación de Rutas API REST**:
+   - **Ruta para Obtener Todos los Instrumentos**:
+     - `GET /api/instruments`
+     - Devuelve todos los instrumentos utilizados en las mediciones de DONKI.
+     - **Ejemplo de respuesta**: 
+       ```json
+       {
+           "instruments": [
+               "MODEL: SWMF",
+               "INSTRUMENTO_X",
+               "INSTRUMENTO_Y"
+           ]
+       }
+       ```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+   - **Ruta para Obtener Todas las IDs de Actividades**:
+     - `GET /api/activity-ids`
+     - Devuelve todas las IDs de actividades sin incluir información sobre las fechas.
+     - **Ejemplo de respuesta**:
+       ```json
+       {
+           "activity_ids": [
+               "IPS-001",
+               "HSS-001",
+               "GST-001"
+           ]
+       }
+       ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+   - **Ruta para Calcular el Porcentaje de Uso de Instrumentos**:
+     - `GET /api/instrument-usage`
+     - Calcula el porcentaje de uso de cada instrumento respecto al total de apariciones.
+     - **Ejemplo de respuesta**:
+       ```json
+       {
+           "usage_percentage": {
+               "MODEL: SWMF": 0.3,
+               "INSTRUMENTO_X": 0.5,
+               "INSTRUMENTO_Y": 0.2
+           }
+       }
+       ```
 
-## Laravel Sponsors
+   - **Ruta para Obtener el Porcentaje de Uso de un Instrumento Específico**:
+     - `POST /api/instrument-usage`
+     - Permite enviar el nombre de un instrumento en el cuerpo de la solicitud y recibir el porcentaje de uso de ese instrumento en las actividades.
+     - **Ejemplo de cuerpo de solicitud**:
+       ```json
+       {
+           "instrument": "MODEL: SWMF"
+       }
+       ```
+     - **Ejemplo de respuesta**:
+       ```json
+       {
+           "instrument": "MODEL: SWMF",
+           "usage_percentage": 0.3
+       }
+       ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Configuración de Variables de Entorno
 
-### Premium Partners
+Para acceder a la API de NASA, necesitarás configurar las siguientes variables de entorno. Puedes hacerlo creando un archivo `.env` en la raíz de tu proyecto y agregando las siguientes líneas:
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+```plaintext
+NASA_API_USER="tu_correo@ejemplo.com"  # Reemplaza con tu dirección de correo electrónico
+NASA_API_ID="tu_id"                      # Reemplaza con tu ID de usuario
+NASA_API_KEY="tu_clave"                  # Reemplaza con tu clave de API
+```
 
-## Contributing
+Asegúrate de reemplazar los valores de ejemplo con tus propios datos. Puedes obtener tu `NASA_API_KEY` registrándote en el [sitio web de la API de NASA](https://api.nasa.gov/).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Propósito General
 
-## Code of Conduct
+El propósito de este repositorio es proporcionar una interfaz sencilla y accesible para interactuar con los datos de la API de DONKI. Al implementar las rutas mencionadas, se facilita la obtención de información relevante sobre los instrumentos y actividades, permitiendo a los usuarios analizar el uso de los instrumentos en las mediciones realizadas por DONKI.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Conclusión
 
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Este repositorio no solo permite acceder a datos de la API de NASA, sino que también organiza y presenta esa información de manera que sea fácil de consumir a través de una API REST. Esto es especialmente útil para investigadores, desarrolladores y cualquier persona interesada en los datos de la NASA relacionados con las actividades solares y espaciales.
 
 ## License
 
