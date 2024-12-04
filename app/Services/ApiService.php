@@ -149,7 +149,7 @@ class ApiService
         
         $usagePercentages = [];
         foreach ($instrumentCount as $name => $count) {
-            $usagePercentages[$name] = $count / $totalInstruments;
+            $usagePercentages[$name] = round($count / $totalInstruments, 2);
         }
 
         return $usagePercentages;

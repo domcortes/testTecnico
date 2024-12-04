@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\ApiService;
 use Illuminate\Support\Facades\Log;
 
-class DonkiController extends Controller
+class InstrumentController extends Controller
 {
     private $apiService;
 
@@ -20,7 +20,7 @@ class DonkiController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function instruments(Request $request)
+    public function getInstruments(Request $request)
     {
         $fechaInicio = $request->input('startDate');
         $fechaTermino = $request->input('endDate');
@@ -32,25 +32,6 @@ class DonkiController extends Controller
         } catch (\Exception $e) {
             Log::error('Error en instruments: ' . $e->getMessage());
             return response()->json(['error' => 'Error al obtener instrumentos.'], 500);
-        }
-    }
-
-    /**
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function activityIds(Request $request)
-    {
-        $fechaInicio = $request->input('startDate');
-        $fechaTermino = $request->input('endDate');
-        $apiKey = env('NASA_API_KEY');
-
-        try {
-            $resultados = $this->apiService->getActivityIds($fechaInicio, $fechaTermino, $apiKey);
-            return response()->json(['activityIDs' => $resultados]);
-        } catch (\Exception $e) {
-            Log::error('Error en activityIds: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al obtener IDs de actividad.'], 500);
         }
     }
 
