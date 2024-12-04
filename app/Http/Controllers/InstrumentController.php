@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class InstrumentController extends Controller
 {
-    private $apiService;
+    private ApiService $apiService;
 
     public function __construct(ApiService $apiService)
     {
@@ -20,7 +20,7 @@ class InstrumentController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getInstruments(Request $request)
+    public function getInstruments(Request $request): \Illuminate\Http\JsonResponse
     {
         $fechaInicio = $request->input('startDate');
         $fechaTermino = $request->input('endDate');
@@ -39,7 +39,7 @@ class InstrumentController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getInstrumentsUsage(Request $request)
+    public function getInstrumentsUsage(Request $request): \Illuminate\Http\JsonResponse
     {
         $fechaInicio = $request->input('startDate');
         $fechaTermino = $request->input('endDate');

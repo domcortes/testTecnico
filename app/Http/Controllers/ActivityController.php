@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class ActivityController extends Controller
 {
-    private $apiService;
+    private ApiService $apiService;
 
     public function __construct(ApiService $apiService)
     {
@@ -20,7 +20,7 @@ class ActivityController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getActivityIds(Request $request)
+    public function getActivityIds(Request $request): \Illuminate\Http\JsonResponse
     {
         $fechaInicio = $request->input('startDate');
         $fechaTermino = $request->input('endDate');

@@ -21,7 +21,7 @@ class ApiService
         'notifications' => 'notifications',
     ];
 
-    protected $baseUrl;
+    protected string $baseUrl;
 
     /**
      * @return void
@@ -35,7 +35,7 @@ class ApiService
      * @param string $apiKey
      * @return array
      */
-    public function getApiUrls($apiKey)
+    public function getApiUrls(string $apiKey): array
     {
         return array_map(function ($endpoint) use ($apiKey) {
             return "{$this->baseUrl}/{$endpoint}?api_key={$apiKey}";
@@ -48,7 +48,7 @@ class ApiService
      * @param string $apiKey
      * @return array
      */
-    public function getApisConFechas($fechaInicio, $fechaTermino, $apiKey)
+    public function getApisConFechas(string $fechaInicio, string $fechaTermino, string $apiKey): array
     {
         $fechaInicio = \DateTime::createFromFormat('Y-m-d', $fechaInicio);
         $fechaTermino = \DateTime::createFromFormat('Y-m-d', $fechaTermino);
@@ -72,7 +72,7 @@ class ApiService
      * @param string $apiKey
      * @return array
      */
-    public function getInstruments($fechaInicio, $fechaTermino, $apiKey)
+    public function getInstruments(string $fechaInicio, string $fechaTermino, string $apiKey): array
     {
         $apisConFechas = $this->getApisConFechas($fechaInicio, $fechaTermino, $apiKey);
         $resultados = [];
@@ -96,7 +96,7 @@ class ApiService
      * @param array $data
      * @return array
      */
-    private function extractInstruments($data)
+    private function extractInstruments(array $data): array
     {
         $instruments = [];
         $instrumentsFromData = data_get($data, '*.instruments');
@@ -118,7 +118,7 @@ class ApiService
      * @param string $apiKey
      * @return array
      */
-    public function getActivityIds($fechaInicio, $fechaTermino, $apiKey)
+    public function getActivityIds(string $fechaInicio, string $fechaTermino, string $apiKey): array
     {
         $apisConFechas = $this->getApisConFechas($fechaInicio, $fechaTermino, $apiKey);
         $resultados = [];
@@ -142,7 +142,7 @@ class ApiService
      * @param array $data
      * @return array
      */
-    private function extractActivityIds($data)
+    private function extractActivityIds(array $data): array
     {
         $activityIds = [];
         $activityIdsFromData = data_get($data, '*.activityID');
@@ -165,7 +165,7 @@ class ApiService
      * @param string $apiKey
      * @return array
      */
-    public function getInstrumentsUsage($fechaInicio, $fechaTermino, $apiKey)
+    public function getInstrumentsUsage(string $fechaInicio, string $fechaTermino, string $apiKey): array
     {
         $instruments = $this->getInstruments($fechaInicio, $fechaTermino, $apiKey);
         return $this->getUsagePercentages($instruments);
@@ -175,7 +175,7 @@ class ApiService
      * @param array $instruments
      * @return array
      */
-    private function getUsagePercentages($instruments)
+    private function getUsagePercentages(array $instruments): array
     {
         $instrumentCount = [];
         
