@@ -23,11 +23,18 @@ class ApiService
 
     protected $baseUrl;
 
+    /**
+     * @return void
+     */
     public function __construct()
     {
         $this->baseUrl = 'https://api.nasa.gov/DONKI';
     }
 
+    /**
+     * @param string $apiKey
+     * @return array
+     */
     public function getApiUrls($apiKey)
     {
         return array_map(function ($endpoint) use ($apiKey) {
@@ -35,6 +42,12 @@ class ApiService
         }, self::DONKI_API_LIST);
     }
 
+    /**
+     * @param string $fechaInicio
+     * @param string $fechaTermino
+     * @param string $apiKey
+     * @return array
+     */
     public function getApisConFechas($fechaInicio, $fechaTermino, $apiKey)
     {
         $fechaInicio = \DateTime::createFromFormat('Y-m-d', $fechaInicio);
@@ -53,6 +66,12 @@ class ApiService
         return $apisConFechas;
     }
 
+    /**
+     * @param string $fechaInicio
+     * @param string $fechaTermino
+     * @param string $apiKey
+     * @return array
+     */
     public function getInstruments($fechaInicio, $fechaTermino, $apiKey)
     {
         $apisConFechas = $this->getApisConFechas($fechaInicio, $fechaTermino, $apiKey);
@@ -73,6 +92,10 @@ class ApiService
         return $resultados;
     }
 
+    /**
+     * @param array $data
+     * @return array
+     */
     private function extractInstruments($data)
     {
         $instruments = [];
@@ -89,6 +112,12 @@ class ApiService
         return collect($instruments)->unique('displayName')->pluck('displayName')->values()->all();
     }
 
+    /**
+     * @param string $fechaInicio
+     * @param string $fechaTermino
+     * @param string $apiKey
+     * @return array
+     */
     public function getActivityIds($fechaInicio, $fechaTermino, $apiKey)
     {
         $apisConFechas = $this->getApisConFechas($fechaInicio, $fechaTermino, $apiKey);
@@ -109,6 +138,10 @@ class ApiService
         return $resultados;
     }
 
+    /**
+     * @param array $data
+     * @return array
+     */
     private function extractActivityIds($data)
     {
         $activityIds = [];
@@ -126,12 +159,22 @@ class ApiService
         return collect($activityIds)->unique()->values()->all();
     }
 
+    /**
+     * @param string $fechaInicio
+     * @param string $fechaTermino
+     * @param string $apiKey
+     * @return array
+     */
     public function getInstrumentsUsage($fechaInicio, $fechaTermino, $apiKey)
     {
         $instruments = $this->getInstruments($fechaInicio, $fechaTermino, $apiKey);
         return $this->getUsagePercentages($instruments);
     }
 
+    /**
+     * @param array $instruments
+     * @return array
+     */
     private function getUsagePercentages($instruments)
     {
         $instrumentCount = [];

@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // })->middleware('auth:sanctum');
 
+/**
+ * @api
+ */
 Route::get('/instruments', [InstrumentController::class, 'getInstruments']);
 Route::get('/instrument-usage', [InstrumentController::class, 'getInstrumentsUsage']);
 Route::get('/activity-ids', [ActivityController::class, 'getActivityIds']);
+Route::get('/instruments-usage-percentage', [InstrumentController::class, 'getInstrumentUsagePercentage']);
+
