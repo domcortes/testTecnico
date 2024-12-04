@@ -15,4 +15,4 @@ use Illuminate\Support\Facades\Route;
 Route::get('/instruments', [InstrumentController::class, 'getInstruments'])->name('instruments.index');
 Route::get('/instrument-usage', [InstrumentController::class, 'getInstrumentsUsage'])->name('instrument-usage.index');
 Route::get('/activity-ids', [ActivityController::class, 'getActivityIds'])->name('activity-ids.index');
-Route::get('/instruments-usage-percentage', [InstrumentController::class, 'getInstrumentUsagePercentage'])->name('instruments-usage-percentage.index');
+Route::post('/usage-by-instrument', [InstrumentController::class, 'getUsageByInstrument'])->name('usage-by-instrument.index');

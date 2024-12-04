@@ -63,19 +63,22 @@ Este repositorio implementa una API REST que consume la API abierta de la NASA, 
        ```
 
    - **Ruta para Obtener el Porcentaje de Uso de un Instrumento Específico**:
-     - `POST /api/instrument-usage`
+     - `POST /api/usage-by-instrument`
      - Permite enviar el nombre de un instrumento en el cuerpo de la solicitud y recibir el porcentaje de uso de ese instrumento en las actividades.
      - **Ejemplo de cuerpo de solicitud**:
        ```json
        {
-           "instrument": "MODEL: SWMF"
+           "instrument": "SOHO: LASCO/C2"
        }
        ```
      - **Ejemplo de respuesta**:
        ```json
        {
-           "instrument": "MODEL: SWMF",
-           "usage_percentage": 0.3
+           "instrument_activity": {
+               "SOHO: LASCO/C2": {
+                   "CME-001": 35.66
+                }
+            }
        }
        ```
 

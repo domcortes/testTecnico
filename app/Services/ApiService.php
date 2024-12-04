@@ -197,4 +197,61 @@ class ApiService
 
         return $usagePercentages;
     }
+
+    /**
+     * @param string $instrument
+     * @param string $fechaInicio
+     * @param string $fechaTermino
+     * @param string $apiKey
+     * @return array
+     */
+    public function getUsageByInstrument(string $instrument, string $fechaInicio, string $fechaTermino, string $apiKey): array
+    {
+        $apisConFechas = $this->getApisConFechas($fechaInicio, $fechaTermino, $apiKey);
+        $resultados = [];
+
+        foreach ($apisConFechas as $url) {
+            $respuesta = Http::get($url);
+            if ($respuesta->failed()) {
+                Log::error('Error al obtener datos de la API: ' . $respuesta->body());
+                throw new \Exception('Error al obtener datos de la API: ' . $respuesta->body());
+            }
+
+            $data = $respuesta->json();
+            $usageByInstrument = $this->extractUsageByInstrument($data);
+            $resultados = array_merge($resultados, $usageByInstrument);
+        }
+
+        return $resultados;
+    }
+
+    /**
+     * @param array $data
+     * @return array
+     */
+    private function extractUsageByInstrument(array $data): array
+    {
+        $instruments = [];
+        $instrumentsFromData = data_get($data, '*.instruments');
+        $activityIdsFromData = data_get($data, '*.activityID');
+
+        if ($instrumentsFromData) {
+            foreach ($instrumentsFromData as $index => $instrumentGroup) {
+                $activityId = explode('-', $activityIdsFromData[$index]);
+
+                if (isset($activityId[3]) && isset($activityId[4])) {
+                    $activityKey = $activityId[3] . '-' . $activityId[4];
+
+                    foreach ($instrumentGroup as $instrument) {
+                        $instruments[] = [
+                            'instrument' => $instrument['displayName'],
+                            'activityId' => $activityKey
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $instruments;
+    }
 }
