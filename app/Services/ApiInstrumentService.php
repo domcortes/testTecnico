@@ -9,19 +9,11 @@ class ApiInstrumentService
 {
     protected ApiDonkiCallService $apiDonkiCallService;
 
-    /**
-     * @param ApiDonkiCallService $apiDonkiCallService
-     */
     public function __construct(ApiDonkiCallService $apiDonkiCallService)
     {
         $this->apiDonkiCallService = $apiDonkiCallService;
     }
 
-    /**
-     * @param string $startDate
-     * @param string $endDate
-     * @return array
-     */
     public function getInstruments(string $startDate, string $endDate): array
     {
         $apisConFechas = $this->apiDonkiCallService->getApisConFechas($startDate, $endDate);
@@ -42,10 +34,6 @@ class ApiInstrumentService
         return $resultados;
     }
 
-    /**
-     * @param array $data
-     * @return array
-     */
     private function extractInstruments(array $data): array
     {
         $instruments = [];
@@ -62,21 +50,12 @@ class ApiInstrumentService
         return collect($instruments)->unique('displayName')->pluck('displayName')->values()->all();
     }
 
-    /**
-     * @param string $startDate
-     * @param string $endDate
-     * @return array
-     */
     public function getInstrumentsUsage(string $startDate, string $endDate): array
     {
         $instruments = $this->getInstruments($startDate, $endDate);
         return $this->getUsagePercentages($instruments);
     }
 
-    /**
-     * @param array $instruments
-     * @return array
-     */
     private function getUsagePercentages(array $instruments): array
     {
         $instrumentCount = [];
@@ -100,11 +79,6 @@ class ApiInstrumentService
         return $usagePercentages;
     }
 
-    /**
-     * @param string $startDate
-     * @param string $endDate
-     * @return array
-     */
     public function getUsageByInstrument(string $startDate, string $endDate): array
     {
         $apisConFechas = $this->apiDonkiCallService->getApisConFechas($startDate, $endDate);
@@ -125,10 +99,6 @@ class ApiInstrumentService
         return $resultados;
     }
 
-    /**
-     * @param array $data
-     * @return array
-     */
     private function extractUsageByInstrument(array $data): array
     {
         $instruments = [];
@@ -155,12 +125,6 @@ class ApiInstrumentService
         return $instruments;
     }
 
-    /**
-     * @param string $instrument
-     * @param string $startDate
-     * @param string $endDate
-     * @return array
-     */
     public function getUsageByInstrumentWithCounts(string $instrument, string $startDate, string $endDate): array
     {
         $usageByInstrument = $this->getUsageByInstrument($startDate, $endDate);

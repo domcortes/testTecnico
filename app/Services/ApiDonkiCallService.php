@@ -21,18 +21,12 @@ class ApiDonkiCallService
     protected string $apiKey;
     protected string $baseUrl;
 
-    /**
-     * @return void
-     */
     public function __construct()
     {
         $this->baseUrl = 'https://api.nasa.gov/DONKI';
         $this->apiKey = env('NASA_API_KEY');
     }
 
-    /**
-     * @return array
-     */
     public function getApiUrls(): array
     {
         return array_map(function ($endpoint) {
@@ -40,11 +34,6 @@ class ApiDonkiCallService
         }, self::DONKI_API_LIST);
     }
 
-    /**
-     * @param string $startDate
-     * @param string $endDate
-     * @return array
-     */
     public function getApisConFechas(string $startDate, string $endDate): array
     {
         $startDate = \DateTime::createFromFormat('Y-m-d', $startDate);

@@ -9,19 +9,11 @@ class ApiActivityService
 {
     private $apiDonkiCallService;
 
-    /**
-     * @param ApiDonkiCallService $apiDonkiCallService
-     */
     public function __construct(ApiDonkiCallService $apiDonkiCallService)
     {
         $this->apiDonkiCallService = $apiDonkiCallService;
     }
 
-    /**
-     * @param string $startDate
-     * @param string $endDate
-     * @return array
-     */
     public function getActivityIds(string $startDate, string $endDate): array
     {
         $apisConFechas = $this->apiDonkiCallService->getApisConFechas($startDate, $endDate);
@@ -42,10 +34,6 @@ class ApiActivityService
         return $resultados;
     }
 
-    /**
-     * @param array $data
-     * @return array
-     */
     private function extractActivityIds(array $data): array
     {
         $activityIds = [];

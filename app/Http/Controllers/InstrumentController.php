@@ -4,70 +4,68 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\DatesRequest;
 use App\Http\Requests\GetInstrumentRequest;
-use App\Services\ApiInstrumentService;
-use Illuminate\Http\Request;
 use App\Services\ResponseService;
 use Illuminate\Http\JsonResponse;
+use App\UseCases\Instruments\GetInstrumentsUseCase;
+use App\UseCases\Instruments\GetInstrumentUsageUseCase;
+use App\UseCases\Instruments\GetUsageByInstrumentUseCase;
 
 class InstrumentController extends Controller
 {
-    /**
-     * @return void
-     */
-    public function __construct()
-    {
+    protected GetInstrumentsUseCase $getInstrumentsUseCase;
+    protected GetInstrumentUsageUseCase $getInstrumentUsageUseCase;
+    protected GetUsageByInstrumentUseCase $getUsageByInstrumentUseCase;
+    protected ResponseService $responseService;
+
+    public function __construct(
+        GetInstrumentsUseCase $getInstrumentsUseCase,
+        GetInstrumentUsageUseCase $getInstrumentUsageUseCase,
+        GetUsageByInstrumentUseCase $getUsageByInstrumentUseCase,
+        ResponseService $responseService
+    ) {
+        $this->getInstrumentsUseCase = $getInstrumentsUseCase;
+        $this->getInstrumentUsageUseCase = $getInstrumentUsageUseCase;
+        $this->getUsageByInstrumentUseCase = $getUsageByInstrumentUseCase;
+        $this->responseService = $responseService;
         set_time_limit(60);
     }
 
-    /**
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getInstruments(DatesRequest $request, ApiInstrumentService $apiInstrumentService, ResponseService $responseService): JsonResponse
+    public function getInstruments(DatesRequest $request): JsonResponse
     {
         $validatedData = $request->validated();
 
         try {
-            $resultados = $apiInstrumentService->getInstruments($validatedData['startDate'], $validatedData['endDate']);
-            return $responseService->sendResponse(['instruments' => $resultados]);
+            $resultados = $this->getInstrumentsUseCase->execute($validatedData['startDate'], $validatedData['endDate']);
+            return $this->responseService->sendResponse(['instruments' => $resultados]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return $responseService->sendResponse([
+            return $this->responseService->sendResponse([
                 'errors' => $e->errors()
             ], 422);
         }
     }
 
-    /**
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getInstrumentsUsage(DatesRequest $request, ApiInstrumentService $apiInstrumentService, ResponseService $responseService): JsonResponse
+    public function getInstrumentsUsage(DatesRequest $request): JsonResponse
     {
         $validatedData = $request->validated();
 
         try {
-            $usagePercentages = $apiInstrumentService->getInstrumentsUsage($validatedData['startDate'], $validatedData['endDate']);
-            return $responseService->sendResponse(['instruments_use' => $usagePercentages]);
+            $usagePercentages = $this->getInstrumentUsageUseCase->execute($validatedData['startDate'], $validatedData['endDate']);
+            return $this->responseService->sendResponse(['instruments_use' => $usagePercentages]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return $responseService->sendResponse([
+            return $this->responseService->sendResponse([
                 'errors' => $e->errors()
             ], 422);
         }
     }
 
-    /**
-     * @param GetInstrumentRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getUsageByInstrument(GetInstrumentRequest $request, ApiInstrumentService $apiInstrumentService, ResponseService $responseService): JsonResponse
+    public function getUsageByInstrument(GetInstrumentRequest $request): JsonResponse
     {
         try {
             $validatedData = $request->validated();
-            $result = $apiInstrumentService->getUsageByInstrumentWithCounts($validatedData['instrument'], $validatedData['startDate'], $validatedData['endDate']);
-            return $responseService->sendResponse($result);
-
+            $result = $this->getUsageByInstrumentUseCase->execute($validatedData['instrument'], $validatedData['startDate'], $validatedData['endDate']);
+            return $this->responseService->sendResponse($result);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return $responseService->sendResponse([
+            return $this->responseService->sendResponse([
                 'errors' => $e->errors()
             ], 422);
         }
