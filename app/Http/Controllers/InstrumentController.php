@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use App\Services\ApiService;
 use App\Services\ResponseService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 
 class InstrumentController extends Controller
 {
