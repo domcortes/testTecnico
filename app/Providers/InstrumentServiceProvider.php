@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Services\ApiActivityService;
+use App\Services\ApiDonkiCallService;
+use App\Services\ApiInstrumentService;
 use Illuminate\Support\ServiceProvider;
-use App\Services\ApiService;
+
 
 class InstrumentServiceProvider extends ServiceProvider
 {
@@ -14,8 +17,12 @@ class InstrumentServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->singleton(ApiService::class, function ($app) {
-            return new ApiService();
+        $this->app->singleton(ApiInstrumentService::class, function ($app) {
+            return new ApiInstrumentService($app->make(ApiDonkiCallService::class));
+        });
+
+        $this->app->singleton(ApiActivityService::class, function ($app) {
+            return new ApiActivityService($app->make(ApiDonkiCallService::class));
         });
     }
 

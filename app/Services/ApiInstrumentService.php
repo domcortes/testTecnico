@@ -5,78 +5,26 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class ApiService
+class ApiInstrumentService
 {
-    const DONKI_API_LIST = [
-        'cme' => 'CME',
-        'cme_analysis' => 'CMEAnalysis',
-        'gst' => 'GST',
-        'ips' => 'IPS',
-        'flr' => 'FLR',
-        'sep' => 'SEP',
-        'mpc' => 'MPC',
-        'rbe' => 'RBE',
-        'hss' => 'HSS',
-        'wsa_enlil_simulations' => 'WSAEnlilSimulations',
-        'notifications' => 'notifications',
-    ];
-
-    protected string $apiKey;
-    protected string $baseUrl;
+    protected ApiDonkiCallService $apiDonkiCallService;
 
     /**
-     * @return void
+     * @param ApiDonkiCallService $apiDonkiCallService
      */
-    public function __construct()
+    public function __construct(ApiDonkiCallService $apiDonkiCallService)
     {
-        $this->baseUrl = 'https://api.nasa.gov/DONKI';
-        $this->apiKey = env('NASA_API_KEY');
-    }
-
-    /**
-     * @param string $apiKey
-     * @return array
-     */
-    public function getApiUrls(): array
-    {
-        return array_map(function ($endpoint) {
-            return "{$this->baseUrl}/{$endpoint}?api_key={$this->apiKey}";
-        }, self::DONKI_API_LIST);
+        $this->apiDonkiCallService = $apiDonkiCallService;
     }
 
     /**
      * @param string $startDate
      * @param string $endDate
-     * @param string $apiKey
-     * @return array
-     */
-    public function getApisConFechas(string $startDate, string $endDate): array
-    {
-        $startDate = \DateTime::createFromFormat('Y-m-d', $startDate);
-        $endDate = \DateTime::createFromFormat('Y-m-d', $endDate);
-
-        if ($startDate > $endDate) {
-            throw new \Exception('La fecha de inicio no puede ser mayor a la fecha de término.');
-        }
-
-        $apisConFechas = [];
-        foreach ($this->getApiUrls() as $key => $url) {
-            $urlConFechas = str_replace('yyyy-MM-dd', $startDate->format('Y-m-d'), $url);
-            $urlConFechas = str_replace('yyyy-MM-dd', $endDate->format('Y-m-d'), $urlConFechas);
-            $apisConFechas[$key] = $urlConFechas;
-        }
-        return $apisConFechas;
-    }
-
-    /**
-     * @param string $startDate
-     * @param string $endDate
-     * @param string $apiKey
      * @return array
      */
     public function getInstruments(string $startDate, string $endDate): array
     {
-        $apisConFechas = $this->getApisConFechas($startDate, $endDate);
+        $apisConFechas = $this->apiDonkiCallService->getApisConFechas($startDate, $endDate);
         $resultados = [];
 
         foreach ($apisConFechas as $url) {
@@ -117,54 +65,6 @@ class ApiService
     /**
      * @param string $startDate
      * @param string $endDate
-     * @param string $apiKey
-     * @return array
-     */
-    public function getActivityIds(string $startDate, string $endDate): array
-    {
-        $apisConFechas = $this->getApisConFechas($startDate, $endDate);
-        $resultados = [];
-
-        foreach ($apisConFechas as $url) {
-            $respuesta = Http::get($url);
-            if ($respuesta->failed()) {
-                Log::error('Error al obtener datos de la API: ' . $respuesta->body());
-                throw new \Exception('Error al obtener datos de la API: ' . $respuesta->body());
-            }
-
-            $data = $respuesta->json();
-            $activityIds = $this->extractActivityIds($data);
-            $resultados = array_merge($resultados, $activityIds);
-        }
-
-        return $resultados;
-    }
-
-    /**
-     * @param array $data
-     * @return array
-     */
-    private function extractActivityIds(array $data): array
-    {
-        $activityIds = [];
-        $activityIdsFromData = data_get($data, '*.activityID');
-
-        if ($activityIdsFromData) {
-            foreach ($activityIdsFromData as $activityId) {
-                if (is_string($activityId)) {
-                    $activityId = explode('-', $activityId);
-                    $activityIds[] = $activityId[3] . '-' . $activityId[4];
-                }
-            }
-        }
-
-        return collect($activityIds)->unique()->values()->all();
-    }
-
-    /**
-     * @param string $startDate
-     * @param string $endDate
-     * @param string $apiKey
      * @return array
      */
     public function getInstrumentsUsage(string $startDate, string $endDate): array
@@ -201,15 +101,13 @@ class ApiService
     }
 
     /**
-     * @param string $instrument
      * @param string $startDate
      * @param string $endDate
-     * @param string $apiKey
      * @return array
      */
-    public function getUsageByInstrument(string $instrument, string $startDate, string $endDate): array
+    public function getUsageByInstrument(string $startDate, string $endDate): array
     {
-        $apisConFechas = $this->getApisConFechas($startDate, $endDate);
+        $apisConFechas = $this->apiDonkiCallService->getApisConFechas($startDate, $endDate);
         $resultados = [];
 
         foreach ($apisConFechas as $url) {
@@ -261,12 +159,11 @@ class ApiService
      * @param string $instrument
      * @param string $startDate
      * @param string $endDate
-     * @param string $apiKey
      * @return array
      */
     public function getUsageByInstrumentWithCounts(string $instrument, string $startDate, string $endDate): array
     {
-        $usageByInstrument = $this->getUsageByInstrument($instrument, $startDate, $endDate);
+        $usageByInstrument = $this->getUsageByInstrument($startDate, $endDate);
         $instrumentCounts = [];
 
         foreach ($usageByInstrument as $usage) {

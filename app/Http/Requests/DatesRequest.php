@@ -27,6 +27,9 @@ class DatesRequest extends FormRequest
         ];
     }
 
+    /**
+     * @return array
+     */
     public function messages(): array
     {
         return [
