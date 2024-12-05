@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class GetInstrumentRequest extends FormRequest
+class DatesRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +22,6 @@ class GetInstrumentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'instrument' => 'required|string',
             'startDate' => 'required|date',
             'endDate' => 'required|date|after_or_equal:startDate',
         ];
@@ -31,7 +30,6 @@ class GetInstrumentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'instrument.required' => 'El campo instrumento es obligatorio.',
             'startDate.required' => 'El campo fecha de inicio es obligatorio.',
             'startDate.date' => 'El campo fecha de inicio debe ser una fecha válida.',
             'endDate.required' => 'El campo fecha de finalización es obligatorio.',

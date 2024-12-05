@@ -2,17 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DatesRequest;
 use App\Services\ApiService;
+use App\Services\ResponseService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class ActivityController extends Controller
 {
-    private ApiService $apiService;
-
-    public function __construct(ApiService $apiService)
+    public function __construct()
     {
-        $this->apiService = $apiService;
         set_time_limit(60);
     }
 
@@ -20,18 +18,19 @@ class ActivityController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getActivityIds(Request $request): \Illuminate\Http\JsonResponse
+    public function getActivityIds(DatesRequest $request, ApiService $apiService, ResponseService $responseService): \Illuminate\Http\JsonResponse
     {
-        $fechaInicio = $request->input('startDate');
-        $fechaTermino = $request->input('endDate');
-        $apiKey = env('NASA_API_KEY');
+        $validatedData = $request->validated();
+        $fechaInicio = $validatedData['startDate'];
+        $fechaTermino = $validatedData['endDate'];
 
         try {
-            $resultados = $this->apiService->getActivityIds($fechaInicio, $fechaTermino, $apiKey);
-            return response()->json(['activityIDs' => $resultados]);
-        } catch (\Exception $e) {
-            Log::error('Error en activityIds: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al obtener IDs de actividad.'], 500);
+            $resultados = $apiService->getActivityIds($fechaInicio, $fechaTermino);
+            return $responseService->sendResponse(['activityIDs' => $resultados]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $responseService->sendResponse([
+                'errors' => $e->errors()
+            ], 422);
         }
     }
 }

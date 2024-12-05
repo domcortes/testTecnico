@@ -21,6 +21,7 @@ class ApiService
         'notifications' => 'notifications',
     ];
 
+    protected string $apiKey;
     protected string $baseUrl;
 
     /**
@@ -29,52 +30,53 @@ class ApiService
     public function __construct()
     {
         $this->baseUrl = 'https://api.nasa.gov/DONKI';
+        $this->apiKey = env('NASA_API_KEY');
     }
 
     /**
      * @param string $apiKey
      * @return array
      */
-    public function getApiUrls(string $apiKey): array
+    public function getApiUrls(): array
     {
-        return array_map(function ($endpoint) use ($apiKey) {
-            return "{$this->baseUrl}/{$endpoint}?api_key={$apiKey}";
+        return array_map(function ($endpoint) {
+            return "{$this->baseUrl}/{$endpoint}?api_key={$this->apiKey}";
         }, self::DONKI_API_LIST);
     }
 
     /**
-     * @param string $fechaInicio
-     * @param string $fechaTermino
+     * @param string $startDate
+     * @param string $endDate
      * @param string $apiKey
      * @return array
      */
-    public function getApisConFechas(string $fechaInicio, string $fechaTermino, string $apiKey): array
+    public function getApisConFechas(string $startDate, string $endDate): array
     {
-        $fechaInicio = \DateTime::createFromFormat('Y-m-d', $fechaInicio);
-        $fechaTermino = \DateTime::createFromFormat('Y-m-d', $fechaTermino);
+        $startDate = \DateTime::createFromFormat('Y-m-d', $startDate);
+        $endDate = \DateTime::createFromFormat('Y-m-d', $endDate);
 
-        if ($fechaInicio > $fechaTermino) {
+        if ($startDate > $endDate) {
             throw new \Exception('La fecha de inicio no puede ser mayor a la fecha de término.');
         }
 
         $apisConFechas = [];
-        foreach ($this->getApiUrls($apiKey) as $key => $url) {
-            $urlConFechas = str_replace('yyyy-MM-dd', $fechaInicio->format('Y-m-d'), $url);
-            $urlConFechas = str_replace('yyyy-MM-dd', $fechaTermino->format('Y-m-d'), $urlConFechas);
+        foreach ($this->getApiUrls() as $key => $url) {
+            $urlConFechas = str_replace('yyyy-MM-dd', $startDate->format('Y-m-d'), $url);
+            $urlConFechas = str_replace('yyyy-MM-dd', $endDate->format('Y-m-d'), $urlConFechas);
             $apisConFechas[$key] = $urlConFechas;
         }
         return $apisConFechas;
     }
 
     /**
-     * @param string $fechaInicio
-     * @param string $fechaTermino
+     * @param string $startDate
+     * @param string $endDate
      * @param string $apiKey
      * @return array
      */
-    public function getInstruments(string $fechaInicio, string $fechaTermino, string $apiKey): array
+    public function getInstruments(string $startDate, string $endDate): array
     {
-        $apisConFechas = $this->getApisConFechas($fechaInicio, $fechaTermino, $apiKey);
+        $apisConFechas = $this->getApisConFechas($startDate, $endDate);
         $resultados = [];
 
         foreach ($apisConFechas as $url) {
@@ -113,14 +115,14 @@ class ApiService
     }
 
     /**
-     * @param string $fechaInicio
-     * @param string $fechaTermino
+     * @param string $startDate
+     * @param string $endDate
      * @param string $apiKey
      * @return array
      */
-    public function getActivityIds(string $fechaInicio, string $fechaTermino, string $apiKey): array
+    public function getActivityIds(string $startDate, string $endDate): array
     {
-        $apisConFechas = $this->getApisConFechas($fechaInicio, $fechaTermino, $apiKey);
+        $apisConFechas = $this->getApisConFechas($startDate, $endDate);
         $resultados = [];
 
         foreach ($apisConFechas as $url) {
@@ -160,14 +162,14 @@ class ApiService
     }
 
     /**
-     * @param string $fechaInicio
-     * @param string $fechaTermino
+     * @param string $startDate
+     * @param string $endDate
      * @param string $apiKey
      * @return array
      */
-    public function getInstrumentsUsage(string $fechaInicio, string $fechaTermino, string $apiKey): array
+    public function getInstrumentsUsage(string $startDate, string $endDate): array
     {
-        $instruments = $this->getInstruments($fechaInicio, $fechaTermino, $apiKey);
+        $instruments = $this->getInstruments($startDate, $endDate);
         return $this->getUsagePercentages($instruments);
     }
 
@@ -200,14 +202,14 @@ class ApiService
 
     /**
      * @param string $instrument
-     * @param string $fechaInicio
-     * @param string $fechaTermino
+     * @param string $startDate
+     * @param string $endDate
      * @param string $apiKey
      * @return array
      */
-    public function getUsageByInstrument(string $instrument, string $fechaInicio, string $fechaTermino, string $apiKey): array
+    public function getUsageByInstrument(string $instrument, string $startDate, string $endDate): array
     {
-        $apisConFechas = $this->getApisConFechas($fechaInicio, $fechaTermino, $apiKey);
+        $apisConFechas = $this->getApisConFechas($startDate, $endDate);
         $resultados = [];
 
         foreach ($apisConFechas as $url) {
@@ -253,5 +255,54 @@ class ApiService
         }
 
         return $instruments;
+    }
+
+    /**
+     * @param string $instrument
+     * @param string $startDate
+     * @param string $endDate
+     * @param string $apiKey
+     * @return array
+     */
+    public function getUsageByInstrumentWithCounts(string $instrument, string $startDate, string $endDate): array
+    {
+        $usageByInstrument = $this->getUsageByInstrument($instrument, $startDate, $endDate);
+        $instrumentCounts = [];
+
+        foreach ($usageByInstrument as $usage) {
+            $key = $usage['instrument'] . '|' . $usage['activityId'];
+
+            if (!isset($instrumentCounts[$key])) {
+                $instrumentCounts[$key] = 0;
+            }
+
+            $instrumentCounts[$key]++;
+        }
+
+        $result = [];
+        foreach ($instrumentCounts as $key => $count) {
+            list($currentInstrument, $activityId) = explode('|', $key);
+            $result[] = [
+                'instrument' => $currentInstrument,
+                'activityId' => $activityId,
+                'count' => $count,
+            ];
+        }
+
+        $totalActivities = array_sum(array_column($result, 'count'));
+        $filteredResult = array_filter($result, function ($item) use ($instrument) {
+            return $item['instrument'] == $instrument;
+        });
+
+        $filteredTotal = array_sum(array_column($filteredResult, 'count'));
+        $percentage = ($filteredTotal / $totalActivities) * 100;
+
+        return [
+            'instrument_activity' => [
+                $instrument => [
+                    $filteredResult[0]['activityId'] => round($percentage, 2)
+                ]
+            ]
+        ];
     }
 }

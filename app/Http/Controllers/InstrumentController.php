@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DatesRequest;
 use App\Http\Requests\GetInstrumentRequest;
 use Illuminate\Http\Request;
 use App\Services\ApiService;
+use App\Services\ResponseService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
 class InstrumentController extends Controller
 {
-    private ApiService $apiService;
-
-    public function __construct(ApiService $apiService)
+    public function __construct()
     {
-        $this->apiService = $apiService;
         set_time_limit(60);
     }
 
@@ -21,18 +21,17 @@ class InstrumentController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getInstruments(Request $request): \Illuminate\Http\JsonResponse
+    public function getInstruments(DatesRequest $request, ApiService $apiService, ResponseService $responseService): JsonResponse
     {
-        $fechaInicio = $request->input('startDate');
-        $fechaTermino = $request->input('endDate');
-        $apiKey = env('NASA_API_KEY');
+        $validatedData = $request->validated();
 
         try {
-            $resultados = $this->apiService->getInstruments($fechaInicio, $fechaTermino, $apiKey);
-            return response()->json(['instruments' => $resultados]);
-        } catch (\Exception $e) {
-            Log::error('Error en instruments: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al obtener instrumentos.'], 500);
+            $resultados = $apiService->getInstruments($validatedData['startDate'], $validatedData['endDate']);
+            return $responseService->sendResponse(['instruments' => $resultados]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $responseService->sendResponse([
+                'errors' => $e->errors()
+            ], 422);
         }
     }
 
@@ -40,18 +39,17 @@ class InstrumentController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getInstrumentsUsage(Request $request): \Illuminate\Http\JsonResponse
+    public function getInstrumentsUsage(DatesRequest $request, ApiService $apiService, ResponseService $responseService): JsonResponse
     {
-        $fechaInicio = $request->input('startDate');
-        $fechaTermino = $request->input('endDate');
-        $apiKey = env('NASA_API_KEY');
+        $validatedData = $request->validated();
 
         try {
-            $usagePercentages = $this->apiService->getInstrumentsUsage($fechaInicio, $fechaTermino, $apiKey);
-            return response()->json(['instruments_use' => $usagePercentages]);
-        } catch (\Exception $e) {
-            Log::error('Error en getInstrumentsUsage: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al obtener el uso de instrumentos.'], 500);
+            $usagePercentages = $apiService->getInstrumentsUsage($validatedData['startDate'], $validatedData['endDate']);
+            return $responseService->sendResponse(['instruments_use' => $usagePercentages]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $responseService->sendResponse([
+                'errors' => $e->errors()
+            ], 422);
         }
     }
 
@@ -59,57 +57,15 @@ class InstrumentController extends Controller
      * @param GetInstrumentRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getUsageByInstrument(GetInstrumentRequest $request): \Illuminate\Http\JsonResponse
+    public function getUsageByInstrument(GetInstrumentRequest $request, ApiService $apiService, ResponseService $responseService): JsonResponse
     {
         try {
             $validatedData = $request->validated();
-            $fechaInicio = $request->input('startDate');
-            $fechaTermino = $request->input('endDate');
-            $apiKey = env('NASA_API_KEY');
-
-            $usageByInstrument = $this->apiService->getUsageByInstrument($validatedData['instrument'], $fechaInicio, $fechaTermino, $apiKey);
-
-            $instrumentCounts = [];
-
-            foreach ($usageByInstrument as $usage) {
-                $key = $usage['instrument'] . '|' . $usage['activityId'];
-
-                if (!isset($instrumentCounts[$key])) {
-                    $instrumentCounts[$key] = 0;
-                }
-
-                $instrumentCounts[$key]++;
-            }
-
-            $result = [];
-            foreach ($instrumentCounts as $key => $count) {
-                list($instrument, $activityId) = explode('|', $key);
-                $result[] = [
-                    'instrument' => $instrument,
-                    'activityId' => $activityId,
-                    'count' => $count,
-                ];
-            }
-
-            $totalActivities = array_sum(array_column($result, 'count'));
-
-            $filteredResult = array_filter($result, function ($item) use ($validatedData) {
-                return $item['instrument'] == $validatedData['instrument'];
-            });
-
-            $filteredTotal = array_sum(array_column($filteredResult, 'count'));
-            $percentage = ($filteredTotal / $totalActivities) * 100;
-
-            return response()->json([
-                'instrument_activity' => [
-                    $validatedData['instrument'] => [
-                        $filteredResult[0]['activityId'] => round($percentage, 2)
-                    ]
-                ]
-            ]);
+            $result = $apiService->getUsageByInstrumentWithCounts($validatedData['instrument'], $validatedData['startDate'], $validatedData['endDate']);
+            return $responseService->sendResponse($result);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
+            return $responseService->sendResponse([
                 'errors' => $e->errors()
             ], 422);
         }
